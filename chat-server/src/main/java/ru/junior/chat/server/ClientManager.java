@@ -69,19 +69,35 @@ public class ClientManager implements Runnable {
      * @param message сообщение
      */
     private void broadcastMessage(String message) {
-        for (ClientManager client : clients) {
+        for (ClientManager client: clients) {
             try {
-                if (!client.name.equals(name) && message != null) {
-                    client.bufferedWriter.write(message);
-                    client.bufferedWriter.newLine();
-                    client.bufferedWriter.flush();
+                if (message.startsWith("@")) {
+                    String[] parts = message.split("\\s+", 2);
+                    String recipient = null;
+                    String privateMessage = null;
+                    if (parts.length == 2 && parts[0].startsWith("@")){
+                        recipient = parts[0].substring(1);
+                        privateMessage = parts[1];
+                    }
+                    if (client.name.equals(recipient)) {
+                        client.bufferedWriter.write(privateMessage);
+                        client.bufferedWriter.newLine();
+                        client.bufferedWriter.flush();
+                    }
+                } else {
+                    if (!client.name.equals(name)) {
+                        client.bufferedWriter.write(message);
+                        client.bufferedWriter.newLine();
+                        client.bufferedWriter.flush();
+                    }
                 }
             }
-            catch (IOException e) {
+            catch (IOException e){
                 closeEverything(socket, bufferedReader, bufferedWriter);
             }
         }
     }
+
 
     private void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
         // Удаление клиента из коллекции
